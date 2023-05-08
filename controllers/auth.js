@@ -1,9 +1,15 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const path = require("path");
+const fs = require("fs").promises;
+const gravatar = require("gravatar");
+const Jimp = require("jimp");
 
 const HttpError = require("../helpers/HttpError");
 const { User } = require("../models/user");
 const { SECRET_KEY } = process.env;
+
+const avatarDir = path.join(__dirname, "../public/avatars");
 
 const registerUser = async (req, res, next) => {
   try {
@@ -14,7 +20,13 @@ const registerUser = async (req, res, next) => {
     }
 
     const hashPassword = await bcrypt.hash(password, 10);
-    const result = await User.create({ ...req.body, password: hashPassword });
+    const avatarURL = gravatar.url(email);
+
+    const result = await User.create({
+      ...req.body,
+      password: hashPassword,
+      avatarURL,
+    });
     res.status(201).json({
       status: "success",
       code: 201,
@@ -92,7 +104,7 @@ const currentUser = async (req, res, next) => {
   }
 };
 
-const subscriptionUser = async (req, res, next) => {
+const updateSubscriptionUser = async (req, res, next) => {
   try {
     const { _id } = req.user;
     const result = await User.findByIdAndUpdate(_id, req.body, {
@@ -111,10 +123,35 @@ const subscriptionUser = async (req, res, next) => {
   }
 };
 
+const updateAvatarUser = async (req, res, next) => {
+  try {
+    const { _id } = req.user;
+    const { path: tempUpload, originalname } = req.file;
+
+    const image = await Jimp.read(tempUpload);
+    await image.resize(250, 250).writeAsync(tempUpload);
+
+    const filename = `${_id}_${originalname}`;
+    const resultUpload = path.join(avatarDir, filename);
+    await fs.rename(tempUpload, resultUpload);
+    const avatarURL = path.join("avatars", filename);
+    await User.findByIdAndUpdate(_id, { avatarURL });
+
+    res.status(200).json({
+      status: "success",
+      code: 200,
+      avatarURL,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
   currentUser,
-  subscriptionUser,
+  updateSubscriptionUser,
+  updateAvatarUser,
 };
