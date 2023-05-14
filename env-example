@@ -1,0 +1,7 @@
+DB_HOST = "connection link mongodb"
+
+SECRET_KEY = "secret string"
+
+BASE_URL = "http://localhost:3000"
+
+SEND_GRID_PASSWORD='api key sendgrid'
