@@ -9,7 +9,7 @@ const sgMail = require("@sendgrid/mail");
 
 const HttpError = require("../helpers/HttpError");
 const { User } = require("../models/user");
-const { SECRET_KEY, BASE_URL } = process.env;
+const { SECRET_KEY, BASE_URL, DEV_MAIL} = process.env;
 
 require("dotenv").config();
 
@@ -37,7 +37,7 @@ const registerUser = async (req, res, next) => {
     });
 
     const verifyEmail = {
-      from: "elaoskiera96@gmail.com",
+      from: DEV_MAIL,
       to: email,
       subject: "Verify email",
       html: `<a target="_blank" href="${BASE_URL}/api/users/verify/${verificationToken}">Click verify email</a>`,
@@ -63,10 +63,7 @@ const registerUser = async (req, res, next) => {
 
 const verifyEmail = async (req, res, next) => {
   try {
-    console.log("nen");
     const { verificationToken } = req.params;
-    console.log("2");
-    console.log(verificationToken);
     const user = await User.findOne({ verificationToken });
     if (!user) {
       throw HttpError(404, "User not found");
@@ -98,7 +95,7 @@ const resendVerifyEmail = async (req, res, next) => {
     }
 
     const verifyEmail = {
-      from: "elaoskiera96@gmail.com",
+      from: DEV_MAIL,
       to: email,
       subject: "Verify email",
       html: `<a target="_blank" href="${BASE_URL}/api/users/verify/${user.verificationToken}">Click verify email</a>`,
